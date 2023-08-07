@@ -1,37 +1,31 @@
-import { useState } from 'react';
-import ExpenseList from './Expense-Tracker/Components/ExpenseList';
-import ExpenseFilter from './Expense-Tracker/Components/ExpenseFilter';
-import ExpenseForm from './Expense-Tracker/Components/ExpenseForm';
-import categories from './Expense-Tracker/categories';
+import { useEffect, useState } from 'react';
+import ProductList from './Components/ProductList';
+import axios from 'axios';
+
+interface User {
+	id: number;
+	name: string;
+}
 
 function App() {
-	const [selectedCategory, setSelectedCategory] = useState('');
-	const [expenses, setExpenses] = useState([
-		{ id: 1, description: 'aaa', amount: 10, category: 'Utilities' },
-		{ id: 2, description: 'bbb', amount: 10, category: 'Utilities' },
-		{ id: 3, description: 'ccc', amount: 10, category: 'Utilities' },
-		{ id: 4, description: 'ddd', amount: 10, category: 'Utilities' },
-	]);
+	// const [category, setCategory] = useState('');
+	const [users, setUsers] = useState<User[]>([]);
+	const [error, setError] = useState(''); // afterRender
+	useEffect(() => {
+		axios
+			.get<User[]>('https://jsonplaceholder.typicode.com/uxsers')
+			.then(res => setUsers(res.data))
+			.catch(err => setError(err.message));
+	}, []);
 
-	const visibleExpenses = selectedCategory
-		? expenses.filter((e) => e.category === selectedCategory)
-		: expenses;
 	return (
 		<div>
-			<div className="div mb-5">
-				<ExpenseForm
-					onSubmit={(expense) =>
-						setExpenses([...expenses, { ...expense, id: expenses.length + 1 }])
-					}
-				/>
-			</div>
-			<ExpenseFilter
-				onSelectCategory={(category) => setSelectedCategory(category)}
-			/>
-			<ExpenseList
-				expenses={visibleExpenses}
-				onDelete={(id) => setExpenses(expenses.filter((e) => e.id !== id))}
-			/>
+			{error && <p className="text-danger">{error}</p>}
+			<ul>
+				{users.map(user => (
+					<li key={user.id}>{user.name}</li>
+				))}
+			</ul>
 		</div>
 	);
 }
