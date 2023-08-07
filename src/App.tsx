@@ -13,7 +13,7 @@ function App() {
 	const [error, setError] = useState(''); // afterRender
 	useEffect(() => {
 		axios
-			.get<User[]>('https://jsonplaceholder.typicode.com/uxsers')
+			.get<User[]>('https://jsonplaceholder.typicode.com/users')
 			.then(res => setUsers(res.data))
 			.catch(err => setError(err.message));
 	}, []);
