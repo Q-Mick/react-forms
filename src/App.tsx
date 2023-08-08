@@ -1,26 +1,18 @@
 import { useEffect, useState } from 'react';
 import ProductList from './Components/ProductList';
-import axios, { CanceledError } from 'axios';
 
-interface User {
-	id: number;
-	name: string;
-}
+import { CanceledError } from './Services/api-client';
+import userService, { User } from './Services/user-service';
 
 function App() {
-	// const [category, setCategory] = useState('');
 	const [users, setUsers] = useState<User[]>([]);
 	const [error, setError] = useState(''); // afterRender
 	const [isLoading, setLoading] = useState(false);
-	useEffect(() => {
-		// get -> promise -> res / err
-		const controller = new AbortController();
 
+	useEffect(() => {
 		setLoading(true);
-		axios
-			.get<User[]>('https://jsonplaceholder.typicode.com/users', {
-				signal: controller.signal,
-			})
+		const { request, cancel } = userService.getAll<User>();
+		request
 			.then((res) => {
 				setUsers(res.data);
 				setLoading(false);
@@ -30,27 +22,26 @@ function App() {
 				setError(err.message);
 				setLoading(false);
 			});
-		return () => controller.abort();
+		return () => cancel();
 	}, []);
 
 	const deleteUser = (user: User) => {
 		const originalUsers = [...users];
 		setUsers(users.filter((u) => u.id !== user.id));
 
-		axios
-			.delete('https://jsonplaceholder.typicode.com/users/' + user.id)
-			.catch((err) => {
-				setError(err.message);
-				setUsers(originalUsers);
-			});
+		userService.delete(user.id).catch((err) => {
+			setError(err.message);
+			setUsers(originalUsers);
+		});
 	};
+
 	const addUser = () => {
 		const originalUsers = [...users];
 		const newUser = { id: 0, name: 'Quentin' };
 		setUsers([newUser, ...users]);
 
-		axios
-			.post('https://jsonplaceholder.typicode.com/users', newUser)
+		userService
+			.create(newUser)
 			.then(({ data: savedUser }) => setUsers([savedUser, ...users]))
 			.catch((err) => {
 				setError(err.message);
@@ -62,15 +53,10 @@ function App() {
 		const updatedUser = { ...user, name: user.name + '!' };
 		setUsers(users.map((u) => (u.id === user.id ? updatedUser : u)));
 
-		axios
-			.patch(
-				'https://jsonplaceholder.typicode.com/users/' + user.id,
-				updatedUser
-			)
-			.catch((err) => {
-				setError(err.message);
-				setUsers(originalUsers);
-			});
+		userService.update(updatedUser).catch((err) => {
+			setError(err.message);
+			setUsers(originalUsers);
+		});
 	};
 
 	return (
